@@ -32,31 +32,32 @@ Establish all foundational decisions before writing production code. End with a 
 ### Tasks
 
 #### Product & Design
-- [ ] Finalize product name
-- [ ] Define 5 core user journeys (create bucket, manual sync, pay with warning, reallocation, goal complete)
-- [ ] Design Figma screens for all journeys
-- [ ] Finalize bucket rules: priority model, NEED/WANT logic, protected bucket behavior
-- [ ] Define sync/reconciliation UX behavior
-- [ ] Define edge cases: zero-balance bucket, overspend, refund, duplicate sync
+- [x] Finalize product name ("Bucket")
+- [x] Define 5 core user journeys (create bucket, manual sync, pay with warning, reallocation, goal complete)
+- [x] Design UX specifications and screen wireframes for all journeys (`docs/ux_journeys_and_screens.md`)
+- [x] Finalize bucket rules: priority model, NEED/WANT logic, protected bucket behavior (`docs/bucket_rules_and_edge_cases.md`)
+- [x] Define sync/reconciliation UX behavior
+- [x] Define edge cases: zero-balance bucket, overspend, refund, duplicate sync
 
 #### Project Scaffold
-- [ ] Initialize Flutter project (`flutter create`) with feature-based folder structure
-- [ ] Initialize FastAPI backend project with folder structure
-- [ ] Create `README.md` with product description and setup instructions
-- [ ] Create `.gitignore` for Flutter + Python
-- [ ] Set up `pubspec.yaml` with initial dependencies:
+- [x] Initialize Flutter project with feature-based folder structure
+- [x] Initialize FastAPI backend project with folder structure, Docker, and health check test
+- [x] Create `README.md` with product description and setup instructions
+- [x] Create `.gitignore` for Flutter + Python
+- [x] Set up `pubspec.yaml` with initial dependencies:
   - `drift`, `drift_flutter` — SQLite ORM
   - `flutter_secure_storage` — secure key storage
-  - `riverpod` / `bloc` — state management
+  - `riverpod` — state management
   - `go_router` — navigation
   - `intl` — currency formatting
 
 #### GitHub
-- [ ] Push scaffold to `main` branch
-- [ ] Create branch strategy: `main` (stable) → `dev` → `phase/N` branches
+- [x] Push scaffold to `main` branch
+- [x] Create branch strategy: `main` (stable) → `dev` → `phase/N` branches
+- [x] Tag release `v0.0.1`
 
 ### Deliverable
-> **Clickable Figma prototype** + pushed repo scaffold
+> **UX & Architecture Specs** + pushed repo scaffold (`v0.0.1`) [COMPLETED]
 
 ---
 
