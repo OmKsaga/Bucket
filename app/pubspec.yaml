@@ -1,0 +1,44 @@
+name: bucket_app
+description: "A privacy-first, goal-based virtual UPI wallet and money management app."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Icons & Fonts
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # State Management & Routing
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+
+  # Local Database (SQLite + Drift ORM)
+  drift: ^2.18.0
+  drift_flutter: ^0.1.0
+  sqlite3_flutter_libs: ^0.5.24
+
+  # Secure Storage & Biometrics
+  flutter_secure_storage: ^9.2.2
+  local_auth: ^2.2.0
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+  drift_dev: ^2.18.0
+  build_runner: ^2.4.9
+
+flutter:
+  uses-material-design: true
