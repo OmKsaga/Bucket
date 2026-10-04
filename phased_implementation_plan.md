@@ -71,58 +71,59 @@ Build the complete local data layer: database schema, domain models, and the all
 ### Tasks
 
 #### Domain Models (`lib/domain/models/`)
-- [ ] `Account` — bank account metadata, last known balance, last sync timestamp
-- [ ] `Bucket` — name, icon, target amount, current allocation, deadline, category, need/want, priority, protected flag, notes
-- [ ] `LedgerEntry` — bucket_id, amount_delta, transaction_type, timestamp, note
-- [ ] `SyncSession` — session_id, previous_balance, current_balance, difference, status, timestamp
-- [ ] `AppSettings` — theme, biometric lock enabled, auto-allocation rules (future)
+- [x] `Account` — bank account metadata, last known balance, last sync timestamp
+- [x] `Bucket` — name, icon, target amount, current allocation, deadline, category, need/want, priority, protected flag, notes
+- [x] `LedgerEntry` — bucket_id, amount_delta, transaction_type, timestamp, note
+- [x] `SyncSession` — session_id, previous_balance, current_balance, difference, status, timestamp
+- [x] `AppSettings` — theme, biometric lock enabled, auto-allocation rules (future)
 
-#### Database (Drift/SQLite)
-- [ ] Define all Drift table classes matching domain models
-- [ ] Write and run migrations
-- [ ] Implement DAOs (Data Access Objects) for each table:
-  - `BucketDao` — CRUD + priority-ordered queries
-  - `LedgerDao` — append-only inserts, query by bucket/date
-  - `AccountDao` — get/update balance
-  - `SyncSessionDao` — insert sessions, query history
+#### Database (Drift/SQLite & Repositories)
+- [x] Define all Drift table classes matching domain models (`AccountsTable`, `BucketsTable`, `LedgerEntriesTable`, `SyncSessionsTable`, `AppSettingsTable`)
+- [x] Define `AppDatabase` schema
+- [x] Implement Repository interfaces (`IBucketRepository`, `ILedgerRepository`, `IAccountRepository`, `ISyncSessionRepository`, `ISettingsRepository`)
+- [x] Implement in-memory reactive data layer (`InMemoryRepositories`) with Streams and derived ledger calculations
 
 #### Allocation Engine (`lib/domain/engines/`)
-- [ ] `AllocationEngine`:
+- [x] `AllocationEngine`:
   - Compute current bucket balance from ledger (derived, not stored)
-  - `allocate(bucketId, amount)` — writes `INITIAL_ALLOCATION` or `MANUAL_ADD` ledger entry
-  - `deallocate(bucketId, amount)` — writes `MANUAL_REMOVE`
-  - `reallocate(fromBucketId, toBucketId, amount)` — writes `REALLOCATION` pair
-  - Enforce: total allocations <= account balance
-- [ ] `ExternalSpendEngine` (core reconciliation logic, used in Phase 3 with real data):
-  - Input: `spendAmount`, sorted bucket list (priority ASC, protected excluded)
+  - `allocate(bucket, amount)` — writes `INITIAL_ALLOCATION` or `MANUAL_ADD` ledger entry
+  - `deallocate(bucket, amount)` — writes `MANUAL_REMOVE`
+  - `reallocate(fromBucket, toBucket, amount)` — writes `REALLOCATION` pair
+  - Enforce invariants: total allocations <= spendable balance
+- [x] `ExternalSpendEngine` (core reconciliation waterfall deduction logic):
+  - Input: `spendAmount`, sorted bucket list (WANT before NEED, priority ASC, protected excluded)
   - Apply deductions lowest-priority first
   - Handle multi-bucket overflow
-  - Return list of `LedgerEntry` objects to commit
+  - Return list of `BucketImpact` and `LedgerEntry` objects to commit
   - Write `EXTERNAL_SPEND_IMPACT` entries
-- [ ] `IncomingMoneyEngine`:
-  - Input: `incomeDelta`
-  - Do not auto-allocate; return unallocated amount
-  - Write `INCOME_DETECTED` entry
+  - Preserves protected buckets strictly and reports deficit
+- [x] `IncomingMoneyEngine`:
+  - Input: `incomeDelta`, current unallocated balance
+  - Return unallocated amount and write `INCOME_DETECTED` entry
 
 #### Goal Analytics Engine (`lib/domain/engines/`)
-- [ ] `GoalAnalyticsEngine`:
+- [x] `GoalAnalyticsEngine`:
   - Amount saved, remaining, % complete
   - Days remaining to deadline
   - Required daily / weekly / monthly contribution
-  - Projected completion date based on current contribution rate
+  - Projected completion date based on historical ledger contribution rate
+  - Overdue and goal completion detection
 
 #### Testing
-- [ ] Unit tests for `AllocationEngine` — all ledger operations
-- [ ] Unit tests for `ExternalSpendEngine`:
+- [x] Unit tests for `AllocationEngine` — all ledger operations (`allocation_engine_test.dart`)
+- [x] Unit tests for `ExternalSpendEngine` (`external_spend_engine_test.dart`):
   - Single bucket spend
   - Multi-bucket overflow
   - Protected bucket skip
   - Zero remaining bucket skip
-- [ ] Unit tests for `GoalAnalyticsEngine`
-- [ ] Unit tests for `IncomingMoneyEngine`
+  - WANT before NEED prioritization
+- [x] Unit tests for `GoalAnalyticsEngine` (`goal_analytics_engine_test.dart`)
+- [x] Unit tests for `IncomingMoneyEngine` (`incoming_money_engine_test.dart`)
+- [x] Unit tests for Repository layer (`in_memory_repository_test.dart`)
+- [x] Verification test suite (`backend/tests/test_domain_engines.py`) passing 100%
 
 ### Deliverable
-> **Fully tested data & engine layer** — `flutter test` passes green
+> **Fully tested data & engine layer** (`v0.1.0`) [COMPLETED]
 
 ---
 

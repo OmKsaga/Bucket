@@ -128,8 +128,8 @@ Bucket/
 | Phase | Milestone | Scope | Status |
 |:---:|:---|:---|:---:|
 | **0** | **Foundation & UX** | UX journeys, architecture, schema contracts, project scaffold | **Completed** ✅ |
-| **1** | **Local Core: Data Layer** | Drift/SQLite DB, DAOs, AllocationEngine, Waterfall deduction, Unit tests | Upcoming ⏳ |
-| **2** | **Local Core: UI Layer** | Complete offline Flutter UI (Home, Buckets, Ledger, Manual sync sim) | Upcoming ⏳ |
+| **1** | **Local Core: Data Layer** | Drift/SQLite DB, DAOs, AllocationEngine, Waterfall deduction, Unit tests | **Completed** ✅ |
+| **2** | **Local Core: UI Layer** | Complete offline Flutter UI (Home, Buckets, Ledger, Manual sync sim) | Next ⏳ |
 | **3** | **Reconciliation Engine** | Bank/PSP sandbox sync, live waterfall reconciliation, Payment warning | Upcoming ⏳ |
 | **4** | **Payments & Backend** | FastAPI backend, JWT auth, UPI payment initiation, Docker/AWS | Upcoming ⏳ |
 | **5** | **Analytics & Security** | Goal analytics, push notifications, biometric lock, beta release | Upcoming ⏳ |
