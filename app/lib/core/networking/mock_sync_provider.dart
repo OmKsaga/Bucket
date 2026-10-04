@@ -97,10 +97,7 @@ class MockSyncProvider implements IBalanceSyncProvider {
   @override
   Future<bool> authenticate() async {
     if (_isOffline) {
-      throw const AsyncError(
-        'Network error: Unable to contact bank authorization server.',
-        StackTrace.empty,
-      );
+      throw StateError('Network error: Unable to contact bank authorization server.');
     }
     await Future.delayed(const Duration(milliseconds: 100));
     return true;

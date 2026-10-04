@@ -5,6 +5,9 @@ class AppTheme {
   static const Color darkBg = Color(0xFF0F172A); // Slate 900
   static const Color darkSurface = Color(0xFF1E293B); // Slate 800
   static const Color darkCard = Color(0xFF334155); // Slate 700
+  static const Color darkBackground = darkBg;
+  static const Color surfaceDark = darkSurface;
+  static const Color cardDark = darkCard;
   static const Color primaryAccent = Color(0xFF6366F1); // Indigo 500
   static const Color primaryAccentLight = Color(0xFF818CF8); // Indigo 400
   static const Color secondaryAccent = Color(0xFF06B6D4); // Cyan 500

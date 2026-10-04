@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../domain/models/models.dart';
 import '../../../domain/engines/goal_analytics_engine.dart';
 import '../../shared/wallet_provider.dart';
 import 'create_edit_bucket_sheet.dart';

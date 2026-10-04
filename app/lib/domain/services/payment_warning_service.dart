@@ -81,7 +81,7 @@ class PaymentWarningService {
       );
     }
 
-    final deficit = amountPaise - max(0, spendableBalancePaise);
+    final int deficit = amountPaise - (spendableBalancePaise > 0 ? spendableBalancePaise : 0);
 
     // Run hypothetical waterfall to project impact
     final waterfall = ExternalSpendEngine.executeWaterfall(

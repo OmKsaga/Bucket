@@ -1,6 +1,6 @@
 import 'dart:async';
-import '../../domain/models/models.dart';
-import '../../domain/repositories/repositories.dart';
+import '../../../domain/models/models.dart';
+import '../../../domain/repositories/repositories.dart';
 
 /// In-memory implementation of IBucketRepository.
 class InMemoryBucketRepository implements IBucketRepository {

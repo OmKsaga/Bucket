@@ -13,7 +13,7 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wallet = ref.watch(walletProvider);
     final buckets = wallet.buckets;
-    final ledger = wallet.ledger;
+    final ledger = wallet.recentLedger;
 
     // Calculate aggregated portfolio stats
     final totalTargetPaise = buckets.fold<int>(0, (sum, b) => sum + b.targetAmountPaise);
@@ -23,15 +23,15 @@ class AnalyticsScreen extends ConsumerWidget {
         : 100.0;
 
     // NEED vs WANT breakdown
-    final needBuckets = buckets.where((b) => b.category == BucketCategory.need);
-    final wantBuckets = buckets.where((b) => b.category == BucketCategory.want);
+    final needBuckets = buckets.where((b) => b.type == BucketType.need);
+    final wantBuckets = buckets.where((b) => b.type == BucketType.want);
     final needAllocatedPaise = needBuckets.fold<int>(0, (sum, b) => sum + b.currentAllocationPaise);
     final wantAllocatedPaise = wantBuckets.fold<int>(0, (sum, b) => sum + b.currentAllocationPaise);
     final needPercent = totalAllocatedPaise > 0 ? (needAllocatedPaise / totalAllocatedPaise) * 100 : 50.0;
     final wantPercent = totalAllocatedPaise > 0 ? (wantAllocatedPaise / totalAllocatedPaise) * 100 : 50.0;
 
     // External Spend Analysis
-    final externalSpends = ledger.where((e) => e.entryType == LedgerEntryType.externalSpendWaterfall).toList();
+    final externalSpends = ledger.where((e) => e.transactionType == TransactionType.externalSpendImpact).toList();
     final totalExternalSpendPaise = externalSpends.fold<int>(0, (sum, e) => sum + e.amountDeltaPaise.abs());
     final avgSpendPaise = externalSpends.isNotEmpty ? (totalExternalSpendPaise / externalSpends.length).round() : 0;
 
@@ -308,7 +308,7 @@ class AnalyticsScreen extends ConsumerWidget {
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        'Priority ${bucket.priority} • ${bucket.category.displayName}${bucket.isProtected ? ' • 🛡️ Protected' : ''}',
+                        'Priority ${bucket.priority} • ${bucket.type == BucketType.need ? 'Need' : 'Want'}${bucket.isProtected ? ' • 🛡️ Protected' : ''}',
                         style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],
