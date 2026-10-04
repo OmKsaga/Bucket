@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
+import 'core/routing/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BucketApp());
+  runApp(const ProviderScope(child: BucketApp()));
 }
 
 class BucketApp extends StatelessWidget {
@@ -12,32 +14,13 @@ class BucketApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.savings_rounded, size: 72, color: AppTheme.primaryAccent),
-              SizedBox(height: 16),
-              Text(
-                AppConstants.appName,
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                AppConstants.appTagline,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      ),
+      themeMode: ThemeMode.dark, // Default to sleek dark mode
+      routerConfig: AppRouter.router,
     );
   }
 }

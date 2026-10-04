@@ -137,51 +137,51 @@ Build the complete offline Flutter UI wired to the Phase 1 data layer. The app s
 ### Tasks
 
 #### Core UI Setup
-- [ ] Design system: color tokens, typography (Google Fonts — `Outfit` or `Inter`), spacing constants
-- [ ] `AppTheme` — light + dark theme
-- [ ] `GoRouter` route table — all named routes defined
+- [x] Design system: color tokens, priority color palettes, spacing constants
+- [x] `AppTheme` — light + dark theme with custom cards, badges, and buttons
+- [x] `GoRouter` route table — all named routes defined (`AppRouter`)
 
 #### Home Screen (`lib/features/home/`)
-- [ ] Display: total balance, allocated amount, spendable/unallocated amount
-- [ ] Quick action buttons: **Scan & Pay**, **Send Money** (both mock for now)
-- [ ] Recent transactions list (from ledger, last 10 entries)
-- [ ] Balance card with animated number transitions
+- [x] Display: total bank balance, committed goal allocation, spendable/unallocated balance with deficit warning
+- [x] Quick action buttons: **Scan & Pay**, **Send Money** (with pre-payment warning & lowest-priority impact preview)
+- [x] Recent transactions audit list from ledger
+- [x] Priority goals spotlight carousel
 
 #### Buckets Screen (`lib/features/allocations/`)
-- [ ] List all buckets sorted by priority
-- [ ] Each bucket card: name, icon, allocated / target, % progress bar, deadline, NEED/WANT badge, protected badge
-- [ ] Create Bucket flow (bottom sheet / full screen):
-  - Name, icon picker, target amount, deadline date picker, category, NEED/WANT, priority slider, protected toggle, notes
-- [ ] Edit Bucket — same form, pre-filled
-- [ ] Delete Bucket — with confirmation + ledger impact warning
-- [ ] Sync status bar: "Last synced: —" + **Sync Now** button (stubbed for now)
+- [x] List all buckets sorted by priority (1 to 5)
+- [x] Filter chips: All, Needs, Wants, Completed
+- [x] Each bucket card: name, icon, allocated / target, progress bar, deadline, NEED/WANT badge, protected badge
+- [x] Create Bucket flow (bottom sheet):
+  - Name, icon picker, target amount, initial allocation, category, NEED/WANT, priority slider (1-5), protected toggle, deadline picker, notes
+- [x] Edit Bucket — pre-filled form with live updates
+- [x] Delete Bucket — with confirmation dialog and refund to spendable pool
+- [x] Quick inline reallocation CTA on each card
 
 #### Bucket Detail Screen
-- [ ] All bucket fields displayed
-- [ ] Goal analytics card (from `GoalAnalyticsEngine`)
-- [ ] **Add Allocation** — add funds to this bucket
-- [ ] **Remove Allocation** — withdraw from this bucket
-- [ ] **Reallocate** — move funds to another bucket (picker + amount)
-- [ ] Ledger history for this bucket
+- [x] All bucket fields and priority badges displayed
+- [x] Goal analytics card (from `GoalAnalyticsEngine`): days remaining, required daily/weekly/monthly contributions
+- [x] **Add Allocation** dialog with quick chips (+₹500, +₹1,000, +₹2,000, +₹5,000)
+- [x] **Remove Allocation** dialog
+- [x] **Reallocate** dialog with visual transfer arrow and zero-bank-impact reassurance
+- [x] Isolated chronological ledger history for the selected goal
 
 #### Ledger / Transaction History Screen (`lib/features/goals/`)
-- [ ] Full chronological ledger list
-- [ ] Filter by: bucket, transaction type, date range
-- [ ] Each entry: type icon, bucket name, amount delta, timestamp, note
+- [x] Full chronological ledger list
+- [x] Filter chips: All, External Spend, Reallocations, Income, Manual Adds
+- [x] Each entry: type icon, bucket name, amount delta (+/-), timestamp, balance after snapshot
 
-#### Manual Sync Simulation Screen
-- [ ] Input: "Enter current balance" (simulates what sync will do in Phase 3)
-- [ ] Shows diff, runs `ExternalSpendEngine` or `IncomingMoneyEngine`
-- [ ] Shows sync result UI matching the spec:
-  - "External spending detected: ₹X — allocated to: [Bucket]"
-  - "₹X new money detected — [ Allocate ] [ Keep Unallocated ]"
+#### Manual Sync Simulation Screen (`lib/features/home/`)
+- [x] Bank balance input & quick presets (-₹6,000 Grocery, -₹10,000 Multi-goal overflow, +₹15,000 Salary)
+- [x] Live difference calculation and classification
+- [x] Executes `ExternalSpendEngine` waterfall deduction or `IncomingMoneyEngine`
+- [x] Animated sync results card showing affected buckets (before → after) and preserved protected goals
 
 #### State Management
-- [ ] Riverpod (or Bloc) providers for: account state, bucket list, ledger stream, sync state
-- [ ] Reactive UI — bucket list updates instantly on allocation change
+- [x] Riverpod `walletProvider` managing account, buckets, audit ledger, and waterfall results
+- [x] Reactive UI — all balances and cards update immediately on any mutation
 
 ### Deliverable
-> **Fully functional offline app** — all screens, navigable, data persists
+> **Fully functional offline app** (`v0.2.0`) [COMPLETED]
 
 ---
 
