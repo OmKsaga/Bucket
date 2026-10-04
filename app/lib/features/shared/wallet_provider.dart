@@ -4,6 +4,9 @@ import '../../domain/models/models.dart';
 import '../../domain/engines/allocation_engine.dart';
 import '../../domain/engines/external_spend_engine.dart';
 import '../../domain/engines/incoming_money_engine.dart';
+import '../../domain/services/reconciliation_service.dart';
+import '../../core/networking/mock_sync_provider.dart';
+import '../../core/database/in_memory/in_memory_repositories.dart';
 
 /// State of the wallet, accounts, buckets, and audit ledger.
 class WalletState {
@@ -14,6 +17,7 @@ class WalletState {
   final String? errorMessage;
   final String? lastSyncMessage;
   final WaterfallResult? lastWaterfallResult;
+  final SyncOutcome? lastSyncOutcome;
 
   const WalletState({
     required this.account,
@@ -23,6 +27,7 @@ class WalletState {
     this.errorMessage,
     this.lastSyncMessage,
     this.lastWaterfallResult,
+    this.lastSyncOutcome,
   });
 
   int get totalBankBalancePaise => account.totalBalancePaise;
@@ -43,6 +48,7 @@ class WalletState {
     String? errorMessage,
     String? lastSyncMessage,
     WaterfallResult? lastWaterfallResult,
+    SyncOutcome? lastSyncOutcome,
     bool clearWaterfall = false,
   }) {
     return WalletState(
@@ -53,6 +59,7 @@ class WalletState {
       errorMessage: errorMessage,
       lastSyncMessage: lastSyncMessage ?? this.lastSyncMessage,
       lastWaterfallResult: clearWaterfall ? null : (lastWaterfallResult ?? this.lastWaterfallResult),
+      lastSyncOutcome: lastSyncOutcome ?? this.lastSyncOutcome,
     );
   }
 }
@@ -61,7 +68,28 @@ class WalletState {
 class WalletNotifier extends StateNotifier<WalletState> {
   static const _uuid = Uuid();
 
-  WalletNotifier() : super(_createInitialState());
+  late final MockSyncProvider mockSyncProvider;
+  late final InMemoryAccountRepository accountRepo;
+  late final InMemoryBucketRepository bucketRepo;
+  late final InMemoryLedgerRepository ledgerRepo;
+  late final InMemorySyncSessionRepository syncSessionRepo;
+  late final ReconciliationService reconciliationService;
+
+  WalletNotifier() : super(_createInitialState()) {
+    mockSyncProvider = MockSyncProvider(initialBalancePaise: state.totalBankBalancePaise);
+    accountRepo = InMemoryAccountRepository(state.account);
+    bucketRepo = InMemoryBucketRepository(state.buckets);
+    ledgerRepo = InMemoryLedgerRepository(state.recentLedger);
+    syncSessionRepo = InMemorySyncSessionRepository();
+
+    reconciliationService = ReconciliationService(
+      syncProvider: mockSyncProvider,
+      accountRepository: accountRepo,
+      bucketRepository: bucketRepo,
+      ledgerRepository: ledgerRepo,
+      syncSessionRepository: syncSessionRepo,
+    );
+  }
 
   static WalletState _createInitialState() {
     final now = DateTime.now();
@@ -177,6 +205,49 @@ class WalletNotifier extends StateNotifier<WalletState> {
       buckets: buckets,
       recentLedger: recentLedger.reversed.toList(),
     );
+  }
+
+  /// Synchronizes with the balance sync provider using ReconciliationService.
+  Future<SyncOutcome> syncWithProvider({bool force = false}) async {
+    state = state.copyWith(isLoading: true);
+
+    // Keep repositories synchronized with latest state
+    await accountRepo.saveAccount(state.account);
+    for (final b in state.buckets) {
+      await bucketRepo.saveBucket(b);
+    }
+
+    final outcome = await reconciliationService.runSync(force: force);
+
+    final updatedAccount = await accountRepo.getAccount() ?? state.account;
+    final updatedBuckets = await bucketRepo.getAllBuckets();
+    final updatedLedger = await ledgerRepo.getAllEntries();
+
+    state = state.copyWith(
+      account: updatedAccount,
+      buckets: updatedBuckets,
+      recentLedger: updatedLedger.reversed.toList(),
+      isLoading: false,
+      lastSyncMessage: outcome.message,
+      lastSyncOutcome: outcome,
+    );
+
+    return outcome;
+  }
+
+  /// Queues an external spending event in the sync provider to simulate bank statement activity.
+  void queueExternalSpendInProvider(int amountPaise, String merchantName) {
+    mockSyncProvider.simulateExternalSpend(amountPaise: amountPaise, merchantName: merchantName);
+  }
+
+  /// Queues incoming salary in the sync provider.
+  void queueIncomingSalaryInProvider(int amountPaise, String source) {
+    mockSyncProvider.simulateIncomingMoney(amountPaise: amountPaise, source: source);
+  }
+
+  /// Queues a refund in the sync provider.
+  void queueRefundInProvider(int amountPaise, String merchantName) {
+    mockSyncProvider.simulateRefund(amountPaise: amountPaise, merchantName: merchantName);
   }
 
   /// Allocates spendable money to a goal bucket.
@@ -313,69 +384,9 @@ class WalletNotifier extends StateNotifier<WalletState> {
   }
 
   /// Simulates a bank balance change (Sync simulator).
-  /// Detects difference and triggers either Waterfall deduction or Income detection.
   void simulateBalanceSync(int newBankBalancePaise) {
-    final prevBalance = state.totalBankBalancePaise;
-    final delta = newBankBalancePaise - prevBalance;
-    final now = DateTime.now();
-
-    if (delta == 0) {
-      state = state.copyWith(
-        account: state.account.copyWith(lastSyncedAt: now),
-        lastSyncMessage: 'Balances up to date. No difference detected.',
-        clearWaterfall: true,
-      );
-      return;
-    }
-
-    if (delta < 0) {
-      // External Spending Detected!
-      final spendAmount = delta.abs();
-      final waterfallResult = ExternalSpendEngine.executeWaterfall(
-        spendAmountPaise: spendAmount,
-        unallocatedBalancePaise: state.spendableBalancePaise,
-        activeBuckets: state.buckets,
-        timestamp: now,
-      );
-
-      final updatedAccount = state.account.copyWith(
-        totalBalancePaise: newBankBalancePaise,
-        lastSyncedAt: now,
-      );
-
-      final updatedLedger = [
-        ...waterfallResult.generatedLedgerEntries,
-        ...state.recentLedger,
-      ];
-
-      state = state.copyWith(
-        account: updatedAccount,
-        buckets: waterfallResult.allUpdatedBuckets,
-        recentLedger: updatedLedger,
-        lastWaterfallResult: waterfallResult,
-        lastSyncMessage: 'Sync detected external spending of -₹${spendAmount / 100}. Reallocated accounting impact.',
-      );
-    } else {
-      // Incoming Money Detected!
-      final incomeResult = IncomingMoneyEngine.processIncoming(
-        incomingAmountPaise: delta,
-        currentUnallocatedPaise: state.spendableBalancePaise,
-        note: 'Incoming funds detected via balance sync',
-        timestamp: now,
-      );
-
-      final updatedAccount = state.account.copyWith(
-        totalBalancePaise: newBankBalancePaise,
-        lastSyncedAt: now,
-      );
-
-      state = state.copyWith(
-        account: updatedAccount,
-        recentLedger: [incomeResult.ledgerEntry, ...state.recentLedger],
-        lastSyncMessage: 'Sync detected incoming money: +₹${delta / 100} added to spendable pool.',
-        clearWaterfall: true,
-      );
-    }
+    mockSyncProvider.setBankBalance(newBankBalancePaise);
+    syncWithProvider(force: true);
   }
 
   /// Simulates an in-app payment (e.g. Scan & Pay or Send Money).
@@ -383,7 +394,6 @@ class WalletNotifier extends StateNotifier<WalletState> {
     if (amountPaise <= 0) {
       throw ArgumentError('Payment amount must be greater than 0.');
     }
-
     final newBankBalance = state.totalBankBalancePaise - amountPaise;
     simulateBalanceSync(newBankBalance);
   }

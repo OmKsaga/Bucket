@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../domain/engines/external_spend_engine.dart';
-import '../..//shared/wallet_provider.dart';
+import '../../../domain/services/payment_warning_service.dart';
+import '../../shared/wallet_provider.dart';
 
 class PaymentSheet extends ConsumerStatefulWidget {
   final String title;
@@ -47,16 +47,15 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
   @override
   Widget build(BuildContext context) {
     final wallet = ref.watch(walletProvider);
-    final spendableRupees = wallet.spendableRupees;
     final int amountPaise = _amountRupees * 100;
-    final bool exceedsSpendable = _amountRupees > spendableRupees;
-    final double deficitRupees = exceedsSpendable ? (_amountRupees - spendableRupees) : 0;
 
-    // Identify lowest priority bucket that would absorb the impact
-    String lowestBucketName = 'None';
-    final deductionOrder = ExternalSpendEngine.getDeductionOrder(wallet.buckets);
-    if (deductionOrder.isNotEmpty) {
-      lowestBucketName = '${deductionOrder.first.icon} ${deductionOrder.first.name} (P${deductionOrder.first.priority})';
+    PaymentWarningEvaluation? evaluation;
+    if (_amountRupees > 0) {
+      evaluation = PaymentWarningService.evaluate(
+        amountPaise: amountPaise,
+        spendableBalancePaise: wallet.spendableBalancePaise,
+        activeBuckets: wallet.buckets,
+      );
     }
 
     return Padding(
@@ -101,9 +100,9 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Live Impact Warning Assessment
-          if (_amountRupees > 0) ...[
-            if (!exceedsSpendable) ...[
+          // Live Impact Warning Assessment using PaymentWarningService
+          if (evaluation != null) ...[
+            if (evaluation.status == PaymentSafetyStatus.safe) ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -117,8 +116,8 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Safe to spend. Fully within unallocated balance of ₹${spendableRupees.toStringAsFixed(0)}.',
-                        style: const TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.w500),
+                        evaluation.description,
+                        style: const TextStyle(color: AppTheme.successGreen, fontWeight: FontWeight.w500, fontSize: 13),
                       ),
                     ),
                   ],
@@ -128,28 +127,59 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.warningAmber.withOpacity(0.12),
+                  color: (evaluation.status == PaymentSafetyStatus.criticalDeficit ? AppTheme.dangerRose : AppTheme.warningAmber).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.warningAmber.withOpacity(0.5)),
+                  border: Border.all(
+                    color: (evaluation.status == PaymentSafetyStatus.criticalDeficit ? AppTheme.dangerRose : AppTheme.warningAmber).withOpacity(0.5),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: AppTheme.warningAmber, size: 22),
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: evaluation.status == PaymentSafetyStatus.criticalDeficit ? AppTheme.dangerRose : AppTheme.warningAmber,
+                          size: 22,
+                        ),
                         const SizedBox(width: 8),
                         Text(
-                          'Exceeds spendable by ₹${deficitRupees.toStringAsFixed(0)}',
-                          style: const TextStyle(color: AppTheme.warningAmber, fontWeight: FontWeight.bold, fontSize: 15),
+                          evaluation.title,
+                          style: TextStyle(
+                            color: evaluation.status == PaymentSafetyStatus.criticalDeficit ? AppTheme.dangerRose : AppTheme.warningAmber,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'The allocation engine expects this amount to impact your lowest-priority eligible goal: $lowestBucketName.',
+                      evaluation.description,
                       style: const TextStyle(fontSize: 13, color: Colors.white70),
                     ),
+                    if (evaluation.predictedImpactedBuckets.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      ...evaluation.predictedImpactedBuckets.map((impact) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${impact.bucket.icon} ${impact.bucket.name} (P${impact.bucket.priority})',
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                              ),
+                              Text(
+                                '-₹${impact.predictedDeductionRupees.toStringAsFixed(0)}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.dangerRose),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
@@ -169,7 +199,7 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Paid ₹$_amountRupees to ${_recipientController.text.trim()}'),
-                        backgroundColor: exceedsSpendable ? AppTheme.warningAmber : AppTheme.successGreen,
+                        backgroundColor: (evaluation?.exceedsSpendable ?? false) ? AppTheme.warningAmber : AppTheme.successGreen,
                       ),
                     );
                   },
