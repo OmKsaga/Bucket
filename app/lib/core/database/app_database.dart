@@ -1,27 +1,8 @@
-import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
-import 'tables/accounts_table.dart';
-import 'tables/buckets_table.dart';
-import 'tables/ledger_entries_table.dart';
-import 'tables/sync_sessions_table.dart';
-import 'tables/app_settings_table.dart';
+// Drift table exports and schema definitions for Bucket Goal-Based Wallet.
+// In-memory and SQLite abstractions are decoupled via repository contracts.
 
-part 'app_database.g.dart';
-
-@DriftDatabase(tables: [
-  AccountsTable,
-  BucketsTable,
-  LedgerEntriesTable,
-  SyncSessionsTable,
-  AppSettingsTable,
-])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
-
-  @override
-  int get schemaVersion => 1;
-
-  static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'bucket_wallet_db');
-  }
-}
+export 'tables/accounts_table.dart';
+export 'tables/buckets_table.dart';
+export 'tables/ledger_entries_table.dart';
+export 'tables/sync_sessions_table.dart';
+export 'tables/app_settings_table.dart';
