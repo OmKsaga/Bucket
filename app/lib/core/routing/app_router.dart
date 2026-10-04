@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/main_scaffold.dart';
 import '../../features/allocations/presentation/bucket_detail_screen.dart';
 import '../../features/home/presentation/sync_simulator_screen.dart';
+import '../../features/auth/presentation/auth_screen.dart';
+import '../../features/payments/presentation/qr_scanner_screen.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -10,6 +12,14 @@ class AppRouter {
       GoRoute(
         path: '/',
         builder: (context, state) => const MainScaffold(),
+      ),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/qr-scanner',
+        builder: (context, state) => const QrScannerScreen(),
       ),
       GoRoute(
         path: '/bucket/:id',

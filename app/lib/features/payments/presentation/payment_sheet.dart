@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/services/payment_warning_service.dart';
 import '../../shared/wallet_provider.dart';
+import '../services/upi_payment_service.dart';
 
 class PaymentSheet extends ConsumerStatefulWidget {
   final String title;
@@ -190,18 +191,40 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
           ElevatedButton(
             onPressed: _amountRupees <= 0
                 ? null
-                : () {
+                : () async {
+                    final recipient = _recipientController.text.trim();
+                    final upiService = ref.read(upiPaymentServiceProvider);
+
+                    // 1. Initiate payment intent (backend or local fallback)
+                    final result = await upiService.initiatePayment(
+                      payeeVpa: recipient.contains('@') ? recipient : '$recipient@upi',
+                      payeeName: recipient,
+                      amountPaise: amountPaise,
+                      note: 'Bucket Payment',
+                    );
+
+                    // 2. Perform local waterfall spend & ledger update
                     ref.read(walletProvider.notifier).simulatePayment(
                           amountPaise: amountPaise,
-                          recipient: _recipientController.text.trim(),
+                          recipient: recipient,
                         );
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Paid ₹$_amountRupees to ${_recipientController.text.trim()}'),
-                        backgroundColor: (evaluation?.exceedsSpendable ?? false) ? AppTheme.warningAmber : AppTheme.successGreen,
-                      ),
-                    );
+
+                    // 3. Schedule 30s background auto-reconciliation
+                    upiService.schedulePostPaymentSync(ref: ref);
+
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Paid ₹$_amountRupees to $recipient (Ref: ${result.providerRef})',
+                          ),
+                          backgroundColor: (evaluation?.exceedsSpendable ?? false)
+                              ? AppTheme.warningAmber
+                              : AppTheme.successGreen,
+                        ),
+                      );
+                    }
                   },
             child: Text(
               _amountRupees <= 0 ? 'Enter Amount' : 'Pay ₹$_amountRupees',

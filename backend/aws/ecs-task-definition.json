@@ -1,0 +1,67 @@
+{
+  "family": "bucket-api-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/bucketEcsExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/bucketEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "bucket-api",
+      "image": "123456789012.dkr.ecr.ap-south-1.amazonaws.com/bucket-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "API_V1_STR",
+          "value": "/api/v1"
+        },
+        {
+          "name": "RATE_LIMIT_REQUESTS_PER_MINUTE",
+          "value": "120"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:123456789012:secret:bucket/production/db-credentials-AbCdEf:DATABASE_URL::"
+        },
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:123456789012:secret:bucket/production/jwt-secret-GhIjKl:SECRET_KEY::"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/api/v1/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 10
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bucket-api",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

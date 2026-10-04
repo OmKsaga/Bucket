@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/models/models.dart';
+import '../../auth/services/auth_service.dart';
 import '../../shared/wallet_provider.dart';
 import '../../payments/presentation/payment_sheet.dart';
 import '../../allocations/presentation/bucket_detail_screen.dart';
@@ -40,9 +42,39 @@ class HomeScreen extends ConsumerWidget {
             icon: const Icon(Icons.sync_rounded),
             tooltip: 'Sync Bank Balance',
             onPressed: () {
-              ref.read(walletProvider.notifier).simulateBalanceSync(wallet.totalBankBalancePaise);
+              ref.read(walletProvider.notifier).syncWithProvider();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Balances synchronized.')),
+              );
+            },
+          ),
+          Consumer(
+            builder: (context, ref, _) {
+              final auth = ref.watch(authProvider);
+              return IconButton(
+                icon: Stack(
+                  children: [
+                    Icon(
+                      auth.isAuthenticated ? Icons.account_circle : Icons.account_circle_outlined,
+                      color: auth.isAuthenticated ? AppTheme.primaryAccent : Colors.white70,
+                    ),
+                    if (auth.isAuthenticated)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.successGreen,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                tooltip: auth.isAuthenticated ? 'Account (${auth.email})' : 'Sign In',
+                onPressed: () => context.push('/auth'),
               );
             },
           ),
@@ -163,18 +195,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                   label: const Text('Scan & Pay'),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Theme.of(context).cardColor,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-                      builder: (_) => const PaymentSheet(
-                        title: 'Scan & Pay',
-                        defaultRecipient: 'merchant.grocery@upi',
-                      ),
-                    );
-                  },
+                  onPressed: () => context.push('/qr-scanner'),
                 ),
               ),
               const SizedBox(width: 12),
