@@ -3,6 +3,7 @@ from app.api.v1.endpoints import (
     auth,
     backup,
     health,
+    notifications,
     payments,
     settings,
     sync,
@@ -17,3 +18,4 @@ api_router.include_router(sync.router)
 api_router.include_router(payments.router)
 api_router.include_router(backup.router)
 api_router.include_router(settings.router)
+api_router.include_router(notifications.router)

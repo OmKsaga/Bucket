@@ -242,3 +242,29 @@ def test_user_settings():
     assert list_resp.status_code == 200
     assert len(list_resp.json()) == 1
     assert list_resp.json()[0]["key"] == "theme_mode"
+
+
+def test_notifications_trigger():
+    reg_resp = client.post(
+        "/api/v1/auth/register",
+        json={"email": "helen@example.com", "password": "SuperSecretPassword123!"},
+    )
+    token = reg_resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Register device
+    client.post(
+        "/api/v1/auth/device",
+        json={"device_token": "fcm_token_helen_phone", "platform": "android"},
+        headers=headers,
+    )
+
+    # Trigger notification
+    notif_resp = client.post(
+        "/api/v1/notifications/trigger",
+        json={"title": "Goal Milestone Reached!", "body": "You reached 75% on Laptop Goal"},
+        headers=headers,
+    )
+    assert notif_resp.status_code == 200
+    assert notif_resp.json()["success"] is True
+    assert notif_resp.json()["devices_targeted"] == 1

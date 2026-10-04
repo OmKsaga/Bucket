@@ -4,6 +4,8 @@ import '../../features/allocations/presentation/bucket_detail_screen.dart';
 import '../../features/home/presentation/sync_simulator_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/payments/presentation/qr_scanner_screen.dart';
+import '../../features/analytics/presentation/analytics_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -20,6 +22,14 @@ class AppRouter {
       GoRoute(
         path: '/qr-scanner',
         builder: (context, state) => const QrScannerScreen(),
+      ),
+      GoRoute(
+        path: '/analytics',
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/bucket/:id',
