@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Release APK
@@ -45,3 +48,16 @@ jobs:
           name: bucket-app-release-apk
           path: app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+
+      - name: Publish Release APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v0.5.0
+          name: "Bucket App v0.5.0 Release"
+          body: |
+            ### Bucket Virtual UPI Wallet - Android Release APK
+            
+            **Direct Download for Android:**
+            Download `app-release.apk` below directly to your Android device to install and test the app.
+          files: app/build/app/outputs/flutter-apk/app-release.apk
