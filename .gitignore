@@ -27,6 +27,8 @@ app/.packages
 app/.pub-cache/
 app/.pub/
 app/build/
+build-outputs/
+*.apk
 app/android/.gradle/
 app/android/local.properties
 app/android/app/build/
